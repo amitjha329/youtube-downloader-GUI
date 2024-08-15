@@ -1,2 +1,6 @@
 dist
 build
+*.mp4
+*.part
+*.ytdl
+*.pyc

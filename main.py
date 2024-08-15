@@ -2,6 +2,7 @@ import customtkinter
 import tkinter
 from yt_dlp import YoutubeDL
 import re
+from utils import bytes_to_mibs
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -20,8 +21,6 @@ class App(customtkinter.CTk):
         self.progressText.pack(padx=10,pady=20)
         self.progressBar = customtkinter.CTkProgressBar(self,width=400)
         self.progressBar.set(0.0)
-        self.progressBar.pack(padx=10,pady=10)
-        self.progressText.pack(padx=10,pady=10)
         self.button = customtkinter.CTkButton(self, text="Download", command=self.button_callbck)
         self.button.pack(padx=20, pady=20)
 
@@ -35,11 +34,18 @@ class App(customtkinter.CTk):
     def progress_callback(self,progressMap):
         self.label.configure(text=progressMap['filename'])
         self.label.update()
-        per = str(int(progressMap['downloaded_bytes']/progressMap['total_bytes']*100))
-        self.progressText.configure(text=per+"%")
-        self.progressText.update()
-        self.progressBar.set(float(per)/100)
-        print(per)
+        self.progressBar.pack(padx=10,pady=10)
+        self.progressText.pack(padx=10,pady=10)
+        if 'total_bytes' in progressMap.keys():
+            per = str(round(progressMap['downloaded_bytes']/progressMap['total_bytes']*100,2))
+            self.progressText.configure(text=per+ f"% at " + str(bytes_to_mibs(int(progressMap['speed'])))+f" MiB/s")
+            self.progressText.update()
+            self.progressBar.set(progressMap['downloaded_bytes']/progressMap['total_bytes'])
+        else:
+            per = str(round(progressMap['fragment_index']/progressMap['fragment_count']*100,2))
+            self.progressText.configure(text=per+ f"% at " + str(bytes_to_mibs(int(progressMap['speed'])))+f" MiB/s")
+            self.progressText.update()
+            self.progressBar.set(progressMap['fragment_index']/progressMap['fragment_count'])
 
     def verify_link(self,link:str)->bool:
         regex = r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
@@ -47,6 +53,7 @@ class App(customtkinter.CTk):
 
     def download_video_single(self,link:str,progress_callback:callable):
         yt_dlp = YoutubeDL({
+            'wait_for_video':(10,60),
             'format':self.format_selector,
             'progress_hooks': [progress_callback],
             },auto_init=True)
