@@ -1,0 +1,4 @@
+yt-dlp==2024.8.6
+customtkinter==5.2.2
+ffmpeg==1.4
+pyinstaller==6.10.0
